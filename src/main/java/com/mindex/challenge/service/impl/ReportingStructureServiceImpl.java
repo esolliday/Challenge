@@ -67,6 +67,7 @@ public class ReportingStructureServiceImpl implements ReportingStructureService
         Employee emp;
         List<Employee> nodeReports;
 
+        // Fixed here
         while(it.hasNext())
         {
             LOG.debug("I'm in the while loop");
