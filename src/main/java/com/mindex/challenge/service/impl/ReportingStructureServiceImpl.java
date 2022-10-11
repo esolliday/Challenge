@@ -16,8 +16,8 @@ import java.util.List;
 @Service
 public class ReportingStructureServiceImpl implements ReportingStructureService
 {
-    int count = 0;
-    boolean done = false;
+    int count;
+
     private static final Logger LOG = LoggerFactory.getLogger(ReportingStructureServiceImpl.class);
 
     @Autowired
@@ -29,16 +29,18 @@ public class ReportingStructureServiceImpl implements ReportingStructureService
     @Override
     public ReportingStructure read(String id) {
 
-
+        count = 0;
         ReportingStructure structure = new ReportingStructure(id);
 
         Employee root = employeeService.read(id);
         List<Employee> rootDirectReports = root.getDirectReports();
 
-        if (rootDirectReports.isEmpty())
+        if (rootDirectReports == null)
         {
+            // Count is zero
             structure.setNumOfReports(Integer.toString(count));
-        } else  // If I get here, I have reports to count
+        }
+        else  // If I get here, I have reports to count
         {
             // Call the recursive function
             // The recursive function will walk the tree
@@ -48,45 +50,35 @@ public class ReportingStructureServiceImpl implements ReportingStructureService
             // This is the count of the root node
             count += rootDirectReports.size();
 
+            LOG.debug("Count is before [{}]", count);
             // This adds the counts of the sub-nodes
             recursive(rootDirectReports);
-
-
-            LOG.debug("Count is  [{}]", count);
-            structure.setNumOfReports(Integer.toString(count));
+            LOG.debug("Count is after [{}]", count);
         }
 
+        structure.setNumOfReports(Integer.toString(count));
         return structure;
     }
 
-    private int recursive(List<Employee> list)
+    private void recursive(List<Employee> list)
     {
         // create an iterator for the list
         Iterator<Employee> it = list.iterator();
-        Employee emp = it.next();
-        List<Employee> nodeReports = emp.getDirectReports();
+        Employee emp;
+        List<Employee> nodeReports;
 
-        do
+        while(it.hasNext())
         {
+            LOG.debug("I'm in the while loop");
+            emp = employeeService.read(it.next().getEmployeeId());
+            nodeReports = emp.getDirectReports();
+
             if(nodeReports != null)
             {
                 LOG.debug("I'm in node reports not null");
                 count += nodeReports.size();
                 LOG.debug("Count inside of recursive is [{}]", count);
             }
-            else
-            {
-                LOG.debug("I'm in node reports null");
-                if (!it.hasNext())
-                {
-                    done = true;
-                }
-                else
-                    emp = it.next();
-            }
-
-        } while (!done);
-
-        return count;
+        }
     }
 }
